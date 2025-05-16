@@ -50,7 +50,7 @@ runs:
 
         # Fetch the analysis data
         response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/repos/${{ inputs.owner }}/${{ inputs.repo }}/code-scanning/analyses?ref=${{ inputs.ref }}&tool_name=${{ inputs.tool_name }}&per_page=${{ inputs.max_results }}")
+          "https://api.github.com/repos/${{ inputs.owner }}/${{ inputs.repo }}/code-scanning/analyses")
         echo "API response: $response"
 
         # Check if the response is a valid array
