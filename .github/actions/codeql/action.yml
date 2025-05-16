@@ -5,7 +5,7 @@ inputs:
   github_token:
     description: 'GitHub Token for API access'
     required: true
-    default: ${{ secrets.GITHUB_TOKEN }}
+    default: ${{ secrets.API_ACCESS_TOKEN}}
   owner:
     description: 'Repository owner'
     required: true
