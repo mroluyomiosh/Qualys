@@ -19,9 +19,9 @@ jobs:
       - name: Download CodeQL Results
         uses: actions/download-artifact@v4
         with:
-          name: codeql-results
+          # name: codeql-results
           github-token: ${{ secrets.API_ACCESS_TOKEN}}
-          run-id: ${{ github.run_id }}
+          path: https://github.com/mroluyomiosh/Qualys/actions/runs/15077095941/artifacts/3142213057
 
       - name: Validate CodeQL from External Action
         uses: mroluyomiosh/Qualys/.github/actions/codeql@main
