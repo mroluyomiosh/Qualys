@@ -49,6 +49,7 @@ runs:
 
         response=$(curl -s -H "Authorization: token ${{ inputs.github_token }}" \
           "https://api.github.com/repos/${{ inputs.owner }}/${{ inputs.repo }}/code-scanning/analyses?ref=${{ inputs.ref }}&tool_name=${{ inputs.tool_name }}&per_page=${{ inputs.max_results }}")
+        echo "$response"
 
         analysis_count=$(echo "$response" | jq '. | length')
         if [ "$analysis_count" -eq 0 ]; then
