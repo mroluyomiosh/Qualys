@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Validate CodeQL from External Action
-        uses: mroluyomiosh/Qualys/.github/action/validate-codeql-action@v1
+        uses: mroluyomiosh/Qualys/.github/action/codeql@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           owner: ${{ github.repository_owner }}
