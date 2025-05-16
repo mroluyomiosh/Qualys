@@ -18,7 +18,7 @@ jobs:
       - name: Validate CodeQL from External Action
         uses: mroluyomiosh/Qualys/.github/actions/codeql@main
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.API_ACCESS_TOKEN }}
           owner: ${{ github.repository_owner }}
           repo: ${{ github.event.repository.name }}
           ref: ${{ github.sha }}
