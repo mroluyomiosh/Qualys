@@ -5,7 +5,6 @@ inputs:
   github_token:
     description: 'GitHub Token for API access'
     required: true
-    default: ''
   owner:
     description: 'Repository owner'
     required: true
@@ -44,13 +43,24 @@ runs:
 
     - name: Validate CodeQL Analysis
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
       run: |
         echo "Validating CodeQL analysis for commit: ${{ inputs.ref }}"
 
-        response=$(curl -s -H "Authorization: token ${{ inputs.github_token }}" \
+        # Fetch the analysis data
+        response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/repos/${{ inputs.owner }}/${{ inputs.repo }}/code-scanning/analyses?ref=${{ inputs.ref }}&tool_name=${{ inputs.tool_name }}&per_page=${{ inputs.max_results }}")
-        echo "$response"
+        echo "API response: $response"
 
+        # Check if the response is a valid array
+        if ! echo "$response" | jq -e 'if type=="array" then . else empty end' > /dev/null; then
+          error_message=$(echo "$response" | jq -r '.message')
+          echo "❌ Error retrieving analysis: $error_message"
+          exit 1
+        fi
+
+        # Get the number of analyses
         analysis_count=$(echo "$response" | jq '. | length')
         if [ "$analysis_count" -eq 0 ]; then
           echo "❌ No CodeQL analysis found for ref: ${{ inputs.ref }}."
@@ -59,11 +69,14 @@ runs:
           fi
         fi
 
+        # Iterate through the analyses and find the matching commit
         for i in $(seq 0 $(($analysis_count - 1))); do
           analysis_id=$(echo "$response" | jq -r ".[$i].id")
           analysis_commit=$(echo "$response" | jq -r ".[$i].commit_sha")
           analysis_tool=$(echo "$response" | jq -r ".[$i].tool.name")
-          if [ "$analysis_commit" == "${{ inputs.ref }}" ] && [ "$analysis_tool" == "${{ inputs.tool_name }}" ]; then
+          
+          # Check if the commit matches (allow partial matches for short SHAs)
+          if [[ "$analysis_commit" == "${{ inputs.ref }}"* ]] && [ "$analysis_tool" == "${{ inputs.tool_name }}" ]; then
             echo "✅ Found CodeQL analysis for ref: ${{ inputs.ref }} with ID: $analysis_id."
             exit 0
           fi
