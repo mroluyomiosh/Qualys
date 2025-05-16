@@ -32,6 +32,9 @@ jobs:
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
 
+    - name: List files after CodeQL analysis
+      run: find . -name "*.sarif"
+
     - name: Upload CodeQL Results
       uses: actions/upload-artifact@v4
       with:
