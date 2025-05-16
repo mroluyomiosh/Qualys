@@ -1,0 +1,21 @@
+name: Trigger CodeQL Validation
+
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  validate-codeql:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Validate CodeQL from External Action
+        uses: mroluyomiosh/Qualys/.github/action/validate-codeql-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          ref: ${{ github.sha }}
