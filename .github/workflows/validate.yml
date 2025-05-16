@@ -21,6 +21,7 @@ jobs:
         with:
           name: codeql-results
           github-token: ${{ secrets.API_ACCESS_TOKEN}}
+          path: ${{ $GITHUB_WORKSPACE }}
 
       - name: Validate CodeQL from External Action
         uses: mroluyomiosh/Qualys/.github/actions/codeql@main
