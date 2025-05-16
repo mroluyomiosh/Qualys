@@ -1,5 +1,5 @@
-name: CodeQL Analysis Validator
-description: Validates whether CodeQL analysis was performed on a given commit.
+name: CodeQL Analysis Validation
+description: Verifies that a given commit has passed through CodeQL analysis.
 
 inputs:
   github_token:
@@ -8,37 +8,66 @@ inputs:
     default: ${{ secrets.GITHUB_TOKEN }}
   owner:
     description: 'Repository owner'
-    required: false
+    required: true
     default: ${{ github.repository_owner }}
   repo:
     description: 'Repository name'
-    required: false
+    required: true
     default: ${{ github.event.repository.name }}
   ref:
     description: 'Git reference (branch, tag, or commit SHA)'
-    required: false
+    required: true
     default: ${{ github.sha }}
   tool_name:
     description: 'Code scanning tool name (e.g., CodeQL)'
     required: false
     default: CodeQL
+  workflow_name:
+    description: 'Name of the workflow to validate'
+    required: false
+    default: "CodeQL Analysis"
+  max_results:
+    description: 'Number of analysis results to retrieve per API call'
+    required: false
+    default: "50"
+  exit_on_failure:
+    description: 'Exit the action with failure if no scan is found'
+    required: false
+    default: "true"
 
 runs:
   using: "composite"
   steps:
+    - name: Install jq
+      run: sudo apt-get install -y jq
+
     - name: Validate CodeQL Analysis
       shell: bash
       run: |
-        echo "Validating CodeQL analysis for commit: ${{ inputs.ref }} in repo ${{ inputs.owner }}/{{ inputs.repo }}"
+        echo "Validating CodeQL analysis for commit: ${{ inputs.ref }}"
 
-        # Fetch the list of CodeQL analyses for the given commit
         response=$(curl -s -H "Authorization: token ${{ inputs.github_token }}" \
-          "https://api.github.com/repos/${{ inputs.owner }}/${{ inputs.repo }}/code-scanning/analyses?ref=${{ inputs.ref }}&tool_name=${{ inputs.tool_name }}")
+          "https://api.github.com/repos/${{ inputs.owner }}/${{ inputs.repo }}/code-scanning/analyses?ref=${{ inputs.ref }}&tool_name=${{ inputs.tool_name }}&per_page=${{ inputs.max_results }}")
 
         analysis_count=$(echo "$response" | jq '. | length')
         if [ "$analysis_count" -eq 0 ]; then
           echo "❌ No CodeQL analysis found for ref: ${{ inputs.ref }}."
-          exit 1
+          if [ "${{ inputs.exit_on_failure }}" == "true" ]; then
+            exit 1
+          fi
         fi
 
-        echo "✅ CodeQL analysis found for ref: ${{ inputs.ref }}."
+        for i in $(seq 0 $(($analysis_count - 1))); do
+          analysis_id=$(echo "$response" | jq -r ".[$i].id")
+          analysis_commit=$(echo "$response" | jq -r ".[$i].commit_sha")
+          analysis_tool=$(echo "$response" | jq -r ".[$i].tool.name")
+          if [ "$analysis_commit" == "${{ inputs.ref }}" ] && [ "$analysis_tool" == "${{ inputs.tool_name }}" ]; then
+            echo "✅ Found CodeQL analysis for ref: ${{ inputs.ref }} with ID: $analysis_id."
+            exit 0
+          fi
+        done
+
+        echo "❌ No valid CodeQL analysis found for ref: ${{ inputs.ref }}."
+        if [ "${{ inputs.exit_on_failure }}" == "true" ]; then
+          exit 1
+        fi
