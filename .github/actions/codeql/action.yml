@@ -48,9 +48,9 @@ runs:
       run: |
         echo "Validating CodeQL analysis for commit: ${{ inputs.ref }}"
 
-        # Fetch the analysis data
+        # Fetch all CodeQL analysis data
         response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-          "https://api.github.com/repos/${{ inputs.owner }}/${{ inputs.repo }}/code-scanning/analyses")
+          "https://api.github.com/repos/${{ inputs.owner }}/${{ inputs.repo }}/code-scanning/analyses?per_page=${{ inputs.max_results }}")
         echo "API response: $response"
 
         # Check if the response is a valid array
@@ -74,10 +74,19 @@ runs:
           analysis_id=$(echo "$response" | jq -r ".[$i].id")
           analysis_commit=$(echo "$response" | jq -r ".[$i].commit_sha")
           analysis_tool=$(echo "$response" | jq -r ".[$i].tool.name")
-          
-          # Check if the commit matches (allow partial matches for short SHAs)
+          analysis_ref=$(echo "$response" | jq -r ".[$i].ref")
+
+          echo "Checking analysis ID: $analysis_id with commit: $analysis_commit and ref: $analysis_ref"
+
+          # Check for both exact and partial SHA matches as well as branch reference
           if [[ "$analysis_commit" == "${{ inputs.ref }}"* ]] && [ "$analysis_tool" == "${{ inputs.tool_name }}" ]; then
-            echo "✅ Found CodeQL analysis for ref: ${{ inputs.ref }} with ID: $analysis_id."
+            echo "✅ Found CodeQL analysis for commit SHA: $analysis_commit with ID: $analysis_id."
+            exit 0
+          fi
+
+          # Check for branch reference match
+          if [[ "$analysis_ref" == "refs/heads/${{ inputs.ref }}" ]] && [ "$analysis_tool" == "${{ inputs.tool_name }}" ]; then
+            echo "✅ Found CodeQL analysis for branch: $analysis_ref with ID: $analysis_id."
             exit 0
           fi
         done
