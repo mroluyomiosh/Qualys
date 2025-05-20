@@ -24,9 +24,9 @@ jobs:
         languages: 'java'
 
     # Navigate to the directory containing pom.xml and build the project
-    # - name: Build with Maven
-    #   working-directory: vulnerable-java-app
-    #   run: mvn clean install
+    - name: Build with Maven
+      working-directory: vulnerable-java-app
+      run: mvn clean install
 
     # Run the CodeQL analysis
     - name: Perform CodeQL Analysis
