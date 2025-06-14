@@ -33,7 +33,7 @@ inputs:
     description: 'Exit the action with failure if no scan is found'
     required: false
     default: "true"
-
+#This is a test
 runs:
   using: "composite"
   steps:
