@@ -1,5 +1,5 @@
 name: Trigger CodeQL Validation
-
+#
 on:
   workflow_run:
     workflows: ["CodeQL Analysis"]
